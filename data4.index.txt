@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>データ探検隊</title>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --bg-color: #F7F9FC;
+        }
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: var(--bg-color);
+            color: #2F3640;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #FFF;
+            padding: 30px;
+            border-radius: 36px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.08);
+            border: 6px solid #FFE66D;
+        }
+        h1 {
+            text-align: center;
+            font-size: 38px;
+            color: #FF6B6B;
+            margin-bottom: 25px;
+            font-weight: 900;
+            text-shadow: 3px 3px 0px #FFE66D;
+        }
+        div { box-sizing: border-box; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 22px;
+            font-weight: 900;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin: 10px;
+            box-shadow: 0 8px 0px #E84118, 0 12px 24px rgba(0,0,0,0.15);
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+        }
+        button:hover { transform: translateY(-4px) scale(1.04); filter: brightness(1.1); box-shadow: 0 12px 0px #E84118, 0 16px 28px rgba(0,0,0,0.2); }
+        button:active { transform: translateY(4px); box-shadow: 0 4px 0px #E84118; }
+
+        .btn-success { background-color: #2ED573; box-shadow: 0 8px 0px #26af5f, 0 12px 24px rgba(0,0,0,0.15); }
+        .btn-success:hover { box-shadow: 0 12px 0px #26af5f, 0 16px 28px rgba(0,0,0,0.2); }
+        .btn-success:active { box-shadow: 0 4px 0px #26af5f; }
+
+        .btn-warning { background-color: #FFA502; color: #fff; box-shadow: 0 8px 0px #e58e26, 0 12px 24px rgba(0,0,0,0.15); }
+        .btn-warning:hover { box-shadow: 0 12px 0px #e58e26, 0 16px 28px rgba(0,0,0,0.2); }
+        .btn-warning:active { box-shadow: 0 4px 0px #e58e26; }
+
+        .btn-secondary { background-color: #747D8C; box-shadow: 0 8px 0px #57606f, 0 12px 24px rgba(0,0,0,0.15); }
+        .btn-secondary:hover { box-shadow: 0 12px 0px #57606f, 0 16px 28px rgba(0,0,0,0.2); }
+        .btn-secondary:active { box-shadow: 0 4px 0px #57606f; }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 20px 0;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            border: 3px solid #F1F2F6;
+        }
+        th, td {
+            border: 1px solid #DFE4EA;
+            padding: 12px;
+            text-align: center;
+        }
+        th { background-color: #FFFA65; color: #2F3640; font-weight: 900; font-size: 18px; }
+        tr:nth-child(even) { background-color: #F8F9FA; }
+
+        input[type="number"], input[type="text"] {
+            width: 130px;
+            padding: 12px;
+            font-size: 18px;
+            border-radius: 14px;
+            border: 3px solid #CED6E0;
+            text-align: center;
+            transition: all 0.2s;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background: #F1F2F6;
+            font-weight: 700;
+        }
+        input[type="number"]:focus, input[type="text"]:focus {
+            border-color: var(--primary);
+            background: #FFF;
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 107, 107, 0.4);
+        }
+
+        .chart-container, .drag-area {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            margin: 0;
+            background: #FFF;
+            border-radius: 0;
+            overflow: hidden;
+            border: none;
+        }
+        .drag-area {
+            touch-action: none;
+            border-radius: 16px;
+            margin: 0;
+            border: none;
+            background: #FFF;
+        }
+        .dot {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            border: 3px solid #2F3640;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 900;
+            user-select: none;
+            z-index: 3;
+            transform: translate(-50%, -50%);
+        }
+        .dot.group-A { background-color: #FF6B6B; }
+        .dot.group-B { background-color: #48DBFB; }
+        
+        .stat-line {
+            position: absolute;
+            border-left: 4px dashed #FF4757;
+            height: 100%;
+            display: none;
+            z-index: 2;
+        }
+        .stat-line-label {
+            position: absolute;
+            color: #FF4757;
+            font-weight: 900;
+            font-size: 16px;
+            background: white;
+            padding: 8px 14px;
+            border: 3px solid #FF4757;
+            border-radius: 14px;
+            top: 15px;
+            display: none;
+            z-index: 2;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .nav-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            background: #FFF9E6;
+            padding: 18px 30px;
+            border-radius: 24px;
+            border: 4px dashed #FFE66D;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .info-panel {
+            background: #E8F8F5;
+            padding: 22px;
+            border-radius: 22px;
+            border-left: 8px solid var(--secondary);
+            margin: 15px 0 25px 0;
+            font-size: 18px;
+            line-height: 1.8;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            font-weight: 700;
+            color: #009432;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📊 データ探検隊 🕵️‍♂️</h1>
+
+    <div id="screen-input" class="screen active">
+        <div class="info-panel">
+            🌟 【学習の流れ】<br>
+            ① 下の表にデータを入力しよう！（Enterキーで下の行へ移動できます）<br>
+            ②「項目を追加する」ボタンで、データ2、データ3…といくらでも増やせます！<br>
+            ③ 入力できたら、グラフをつくるボタンを押して探検スタート！
+        </div>
+        <div style="margin-bottom: 15px; display: flex; justify-content: flex-end;">
+            <button onclick="resetAllData()" class="btn-secondary" style="background-color: #FF4757; box-shadow: 0 6px 0px #ff3838; padding: 12px 24px; font-size: 16px; margin: 0;">🗑️ すべてのデータをリセット</button>
+        </div>
+        <div style="overflow-x: auto;">
+            <table id="data-table">
+                <thead>
+                    <tr id="table-header-row">
+                        <th>番号</th>
+                        <th style="width: 70px;">けす</th>
+                        <th><input type="text" id="col-name-1" value="データ1" placeholder="データ名" oninput="updateColumnNames()" style="font-weight:bold; width:150px;"></th>
+                        <th id="th-col-group" style="display:none;">グループ (A か B)</th>
+                    </tr>
+                </thead>
+                <tbody id="data-tbody">
+                    <!-- 動的に40行生成 -->
+                </tbody>
+            </table>
+        </div>
+        <div style="margin-bottom: 25px; text-align: center; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;">
+            <button onclick="addRow()" class="btn-secondary">➕ 行を追加する</button>
+            <button onclick="addColumn()" class="btn-warning">📚 項目を追加する（データ2…）</button>
+            <button onclick="toggleGroupCol()" id="btn-toggle-group" class="btn-warning">👥 グループ分けを使う</button>
+        </div>
+        <div style="background: #FFFBEB; padding: 18px 22px; border-radius: 18px; margin-bottom: 25px; text-align: center; border: 3px solid #FFE66D;">
+            <p style="margin: 0 0 8px 0; font-weight: 900; color: #D35400; font-size: 18px;">📋 エクセルやスプレッドシートから貼り付け</p>
+            <p style="margin: 0 0 12px 0; font-size: 14px; color: #57606F; font-weight: 700;">エクセル等の表をコピーして、下のテキストボックスにそのまま貼り付けしてください！</p>
+            <textarea id="excel-paste-box" placeholder="ここにエクセル等の表をそのまま貼り付けしてください..." rows="2" style="width: 100%; max-width: 600px; padding: 12px; border-radius: 14px; border: 3px solid #CED6E0; font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 16px; font-weight: 700; background: #FFF;" onpaste="handleExcelPaste(event)"></textarea>
+        </div>
+        <div style="text-align: center; margin-top: 35px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;" id="chart-buttons-area">
+            <button onclick="openSelectScreen(1)" class="btn-success" id="btn-go-1">📊 データ1のグラフ</button>
+        </div>
+    </div>
+
+    <div id="screen-select" class="screen">
+        <div class="nav-box">
+            <span id="select-title" style="font-weight:900; font-size:24px; color:#2F3640;"></span>
+            <button onclick="changeScreen('input')" class="btn-secondary">⬅️ 入力にもどる</button>
+        </div>
+        <p style="text-align:center; font-size:28px; font-weight:900; color:#FF4757; margin:45px 0;">どちらのグラフで データを見てみる？</p>
+        <div style="display: flex; justify-content: center; gap: 40px; margin-top: 35px; flex-wrap: wrap;" id="graph-select-buttons-wrap">
+            <!-- 選択ボタンは動的に生成 -->
+        </div>
+    </div>
+
+    <div id="screen-chart" class="screen">
+        <div class="nav-box">
+            <span id="main-chart-title" style="font-weight:900; font-size:24px; color:#2F3640;"></span>
+            <div style="display:flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                <button onclick="changeScreen('select')" class="btn-secondary">⬅️ グラフ選びにもどる</button>
+                <button onclick="openDragScreen()" class="btn-success" id="btn-drag-mode-toggle" style="display:none;">🔄 自由に動かす</button>
+                <button onclick="downloadChartImage()" class="btn-warning">📷 画像を保存する</button>
+            </div>
+        </div>
+
+        <div id="histogram-controls" style="display:none; background:#FFFBEB; padding:18px 22px; border-radius:18px; margin-bottom:12px; align-items:center; justify-content:space-between; border:3px solid #FFE66D; flex-wrap:wrap; gap:12px;">
+            <div>
+                <label style="font-weight:900; margin-right:12px; color:#D35400; font-size:18px;">📏 階級の幅:</label>
+                <select id="bin-width-select" onchange="renderMainChart()" style="padding:10px 18px; border-radius:12px; font-weight:900; border:3px solid #CED6E0; background:#FFF; font-size:16px;">
+                    <option value="1">1</option>
+                    <option value="2" selected>2</option>
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                </select>
+            </div>
+            <button onclick="openFrequencyTable()" class="btn-success" style="padding:12px 22px; font-size:16px; margin:0;">📋 度数分布表をみる</button>
+        </div>
+
+        <!-- キャプチャ対象エリア -->
+        <div id="chart-sync-scroll-wrapper" style="overflow-x: auto; width: 100%; border-radius: 16px; box-shadow: inset 0 4px 10px rgba(0,0,0,0.05); background: #FFF; margin: 30px 0 10px 0;">
+            <div id="chart-export-target" style="padding: 30px 50px 35px 50px; background: #FFF; min-width: max-content;">
+                <div id="multi-chart-wrapper" style="display: flex; flex-direction: column; gap: 40px;">
+                    <!-- メイン用コンテナ -->
+                    <div id="primary-chart-container-wrap">
+                        <div id="primary-chart-title-label" style="font-weight: 900; font-size: 20px; color: #FF6B6B; margin-bottom: 10px; display: none;">グループA</div>
+                        <div class="chart-container" id="main-chart-outer" style="margin: 0; box-shadow: none; border-radius: 0; border: none; background: transparent;">
+                            <div id="main-chart-area" class="chart-inner-canvas" style="position: relative; height: 380px; width: 100%; min-width: 900px;">
+                                <div id="stat-line" class="stat-line"></div>
+                                <div id="stat-line-label" class="stat-line-label"></div>
+                            </div>
+                        </div>
+                        <div id="chart-x-axis-primary" style="display:flex; justify-content:flex-start; padding:0 10px; font-weight:900; margin-top:8px; font-size:15px; color:#2F3640; min-width: 900px; border-bottom: 3px solid #2F3640; padding-bottom: 8px; position: relative;"></div>
+                    </div>
+                    
+                    <!-- 比較用（グループB）コンテナ -->
+                    <div id="secondary-chart-container-wrap" style="display: none;">
+                        <div id="secondary-chart-title-label" style="font-weight: 900; font-size: 20px; color: #48DBFB; margin-bottom: 10px;">グループB</div>
+                        <div class="chart-container" id="sub-chart-outer" style="margin: 0; box-shadow: none; border-radius: 0; border: none; background: transparent;">
+                            <div id="sub-chart-area" class="chart-inner-canvas" style="position: relative; height: 380px; width: 100%; min-width: 900px;">
+                                <div id="stat-line-sub" class="stat-line" style="border-left-color: #48DBFB; display:none;"></div>
+                            </div>
+                        </div>
+                        <div id="chart-x-axis-secondary" style="display:flex; justify-content:flex-start; padding:0 10px; font-weight:900; margin-top:8px; font-size:15px; color:#2F3640; min-width: 900px; border-bottom: 3px solid #2F3640; padding-bottom: 8px; position: relative;"></div>
+                    </div>
+                </div>
+
+                <!-- 単体表示用の軸目盛り -->
+                <div id="chart-x-axis" style="display:flex; justify-content:flex-start; padding:0 10px; font-weight:900; margin-top:8px; font-size:15px; color:#2F3640; min-width: 900px; border-bottom: 3px solid #2F3640; padding-bottom: 8px; position: relative;"></div>
+            </div>
+        </div>
+
+        <div style="text-align: center; background: #F1F2F6; padding: 25px; border-radius: 24px; box-shadow: inset 0 4px 8px rgba(0,0,0,0.05); margin-top: 25px;">
+            <p style="margin:0 0 14px 0; font-weight:900; color:#2F3640; font-size:20px;">📊 データの「とくちょう」をボタンで呼び出そう！</p>
+            
+            <div id="group-filter-container" style="display:none; margin-bottom: 16px; justify-content: center; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <span style="font-weight: 900; font-size: 16px; color: #57606F;">表示・比較するグループ:</span>
+                <button onclick="setStatGroup('ALL')" id="btn-group-all" class="btn-warning" style="padding: 10px 20px; font-size: 16px; margin: 0; box-shadow: 0 4px 0px #e58e26;">全体</button>
+                <button onclick="setStatGroup('A')" id="btn-group-a" class="btn-secondary" style="padding: 10px 20px; font-size: 16px; margin: 0; box-shadow: 0 4px 0px #57606f; background-color: #FF6B6B;">グループA</button>
+                <button onclick="setStatGroup('B')" id="btn-group-b" class="btn-secondary" style="padding: 10px 20px; font-size: 16px; margin: 0; box-shadow: 0 4px 0px #57606f; background-color: #48DBFB;">グループB</button>
+                <button onclick="setStatGroup('COMPARE')" id="btn-group-compare" class="btn-secondary" style="padding: 10px 20px; font-size: 16px; margin: 0; box-shadow: 0 4px 0px #57606f; background-color: #a29bfe;">上下でくらべる(AとB)</button>
+            </div>
+
+            <button onclick="toggleStat('mean')" class="btn-danger" style="background:#FF4757; box-shadow:0 8px 0px #ff3838; font-size:20px; padding:18px 32px;">平均値</button>
+            <button onclick="toggleStat('median')" class="btn-danger" style="background:#FF4757; box-shadow:0 8px 0px #ff3838; font-size:20px; padding:18px 32px;">中央値</button>
+            <button onclick="toggleStat('mode')" class="btn-danger" style="background:#FF4757; box-shadow:0 8px 0px #ff3838; font-size:20px; padding:18px 32px;">最頻値</button>
+        </div>
+        <div id="stat-result-text" style="text-align:center; font-size:24px; font-weight:900; color:#FF4757; margin-top:20px; height:40px;"></div>
+    </div>
+
+    <div id="screen-drag" class="screen">
+        <div class="nav-box">
+            <span style="font-weight:900; font-size:24px; color:#2F3640;">🔄 自由に動かすモード</span>
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap: wrap;">
+                <div style="background:#FFF; padding:10px 16px; border-radius:14px; border:3px solid #FFE66D; display:flex; align-items:center; gap:8px;">
+                    <span style="font-weight:900; font-size:16px; color:#D35400;">📏 縦軸の目盛りを追加:</span>
+                    <select id="grid-div-select" onchange="renderHorizontalGrids()" style="padding:8px 12px; border-radius:10px; font-weight:900; border:2px solid #CED6E0; background:#F8F9FA; font-size:15px;">
+                        <option value="0" selected>なし</option>
+                        <option value="3">3等分</option>
+                        <option value="5">5等分</option>
+                        <option value="10">10等分</option>
+                    </select>
+                </div>
+                <button onclick="changeScreen('chart')" class="btn-secondary">⬅️ グラフにもどる</button>
+                <button onclick="downloadDragChartImage()" class="btn-warning">📷 画像を保存する</button>
+            </div>
+        </div>
+
+        <div id="drag-export-target" style="background:#FFF; border-radius:16px; padding:20px;">
+            <div style="overflow-x: auto; width: 100%;">
+                <div style="min-width: max-content;">
+                    <div class="drag-area" id="drag-area"></div>
+                    <div id="drag-x-axis" style="display:flex; justify-content:flex-start; padding:0 10px; font-weight:900; margin-top:8px; margin-bottom:0; font-size:15px; color:#2F3640; min-width:900px; border-bottom: 3px solid #2F3640; padding-bottom: 8px; position: relative;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="freq-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center;">
+    <div style="background:white; padding:40px; border-radius:28px; width:500px; max-width:90%; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border:5px solid #FFE66D;">
+        <h3 style="margin-top:0; color:#FF4757; text-align:center; font-size:28px; font-weight:900;">📋 度数分布表</h3>
+        <div id="freq-table-content" style="max-height:340px; overflow-y:auto; margin:20px 0;"></div>
+        <div style="text-align:center;">
+            <button onclick="closeFrequencyTable()" class="btn-secondary">とじる</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    let rawData = [];
+    let numColumns = 1;
+    let currentVarIdx = 1; 
+    let currentChartType = 'dot'; // 'dot' or 'bar'
+    let activeStat = null;
+    let statGroupFilter = 'ALL'; // 'ALL', 'A', 'B', 'COMPARE'
+    let groupVisible = false;
+
+    let draggedElement = null;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    window.onload = function() {
+        buildTableStructure();
+    };
+
+    function updateColumnNames() {
+        const area = document.getElementById('chart-buttons-area');
+        if (!area) return;
+        let html = '';
+        for (let c = 1; c <= numColumns; c++) {
+            const nameInp = document.getElementById(`col-name-${c}`);
+            const name = nameInp ? (nameInp.value || `データ${c}`) : `データ${c}`;
+            html += `<button onclick="openSelectScreen(${c})" class="btn-success" id="btn-go-${c}">📊 ${name}のグラフ</button>`;
+        }
+        area.innerHTML = html;
+    }
+
+    function buildTableStructure() {
+        const headerRow = document.getElementById('table-header-row');
+        if (!headerRow) return;
+        let headerHtml = '<th>番号</th><th style="width: 70px;">けす</th>';
+        for (let c = 1; c <= numColumns; c++) {
+            const currentName = document.getElementById(`col-name-${c}`) ? document.getElementById(`col-name-${c}`).value : `データ${c}`;
+            headerHtml += `<th><input type="text" id="col-name-${c}" value="${currentName}" placeholder="データ名" oninput="updateColumnNames()" style="font-weight:bold; width:150px;"></th>`;
+        }
+        headerHtml += `<th id="th-col-group" style="display:${groupVisible ? '' : 'none'};">グループ (A か B)</th>`;
+        headerRow.innerHTML = headerHtml;
+
+        const tbody = document.getElementById('data-tbody');
+        const existingValues = [];
+        const oldRows = tbody.querySelectorAll('tr');
+        oldRows.forEach((tr, rIdx) => {
+            existingValues[rIdx] = {};
+            for (let c = 1; c <= numColumns; c++) {
+                const inp = tr.querySelector(`.val-col${c}`);
+                if (inp) existingValues[rIdx][c] = inp.value;
+            }
+            const gInp = tr.querySelector('.val-group');
+            if (gInp) existingValues[rIdx]['group'] = gInp.value;
+        });
+
+        tbody.innerHTML = '';
+        for (let i = 1; i <= 40; i++) {
+            const tr = document.createElement('tr');
+            let rowHtml = `<td>${i}</td>`;
+            rowHtml += `<td><button onclick="clearRow(${i})" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; margin: 0; box-shadow: 0 3px 0px #57606f; background-color: #747D8C;">❌</button></td>`;
+            for (let c = 1; c <= numColumns; c++) {
+                const val = (existingValues[i-1] && existingValues[i-1][c]) ? existingValues[i-1][c] : '';
+                rowHtml += `<td><input type="number" class="val-col${c}" data-row="${i}" value="${val}" onkeydown="handleKeydown(event, ${i}, ${c})"></td>`;
+            }
+            const gVal = (existingValues[i-1] && existingValues[i-1]['group']) ? existingValues[i-1]['group'] : '';
+            rowHtml += `<td class="group-cell" style="display:${groupVisible ? '' : 'none'};"><input type="text" class="val-group" data-row="${i}" value="${gVal}" maxlength="1"></td>`;
+            tr.innerHTML = rowHtml;
+            tbody.appendChild(tr);
+        }
+        updateColumnNames();
+    }
+
+    function clearRow(rowNum) {
+        const tbody = document.getElementById('data-tbody');
+        const trs = tbody.querySelectorAll('tr');
+        if (trs[rowNum - 1]) {
+            const tr = trs[rowNum - 1];
+            for (let c = 1; c <= numColumns; c++) {
+                const inp = tr.querySelector(`.val-col${c}`);
+                if (inp) inp.value = '';
+            }
+            const gInp = tr.querySelector('.val-group');
+            if (gInp) gInp.value = '';
+        }
+    }
+
+    function resetAllData() {
+        if (confirm('すべてのデータ（すべての行とグループ設定）をリセットしますか？')) {
+            const inputs = document.querySelectorAll('#data-tbody input');
+            inputs.forEach(input => {
+                input.value = '';
+            });
+        }
+    }
+
+    function addRow() {
+        const tbody = document.getElementById('data-tbody');
+        const rowCount = tbody.rows.length + 1;
+        const tr = document.createElement('tr');
+        let rowHtml = `<td>${rowCount}</td>`;
+        rowHtml += `<td><button onclick="clearRow(${rowCount})" class="btn-secondary" style="padding: 6px 12px; font-size: 14px; margin: 0; box-shadow: 0 3px 0px #57606f; background-color: #747D8C;">❌</button></td>`;
+        for (let c = 1; c <= numColumns; c++) {
+            rowHtml += `<td><input type="number" class="val-col${c}" data-row="${rowCount}" value="" onkeydown="handleKeydown(event, ${rowCount}, ${c})"></td>`;
+        }
+        rowHtml += `<td class="group-cell" style="display:${groupVisible ? '' : 'none'};"><input type="text" class="val-group" data-row="${rowCount}" value="" maxlength="1"></td>`;
+        tr.innerHTML = rowHtml;
+        tbody.appendChild(tr);
+    }
+
+    function addColumn() {
+        numColumns++;
+        buildTableStructure();
+    }
+
+    function toggleGroupCol() {
+        groupVisible = !groupVisible;
+        const btn = document.getElementById('btn-toggle-group');
+        if (groupVisible) {
+            btn.style.backgroundColor = '#2ED573';
+            btn.style.boxShadow = '0 10px 0px #26af5f';
+            btn.innerText = '👥 グループ分け使用中 (ON)';
+        } else {
+            btn.style.backgroundColor = '#FFA502';
+            btn.style.boxShadow = '0 10px 0px #e58e26';
+            btn.innerText = '👥 グループ分けを使う';
+        }
+        buildTableStructure();
+    }
+
+    function handleKeydown(e, row, col) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const nextRow = row + 1;
+            const nextInput = document.querySelector(`.val-col${col}[data-row="${nextRow}"]`);
+            if (nextInput) {
+                nextInput.focus();
+                nextInput.select();
+            }
+        }
+    }
+
+    function handleExcelPaste(e) {
+        e.preventDefault();
+        const clipboardData = e.clipboardData || window.clipboardData;
+        const pastedData = clipboardData.getData('Text');
+        if (!pastedData) return;
+
+        const rows = pastedData.split(/\r\n|\n|\r/).filter(r => r.trim() !== '');
+        if (rows.length === 0) return;
+
+        const parsedRows = rows.map(row => row.split('\t').map(cell => cell.trim()));
+        
+        let startIdx = 0;
+        let headers = [];
+        const firstRow = parsedRows[0];
+        const isFirstRowHeader = firstRow.some(cell => isNaN(cell) && cell !== '');
+
+        if (isFirstRowHeader) {
+            headers = firstRow;
+            startIdx = 1;
+        }
+
+        const dataRows = parsedRows.slice(startIdx);
+        if (dataRows.length === 0) return;
+
+        let groupColIdx = -1;
+        const sampleRow = dataRows[0];
+        
+        for (let c = 0; c < sampleRow.length; c++) {
+            const cellVal = sampleRow[c].toUpperCase();
+            if (cellVal === 'A' || cellVal === 'B') {
+                groupColIdx = c;
+                break;
+            }
+            if (headers[c] && (headers[c].includes('グループ') || headers[c].toUpperCase() === 'GROUP' || headers[c].toUpperCase() === 'G')) {
+                groupColIdx = c;
+                break;
+            }
+        }
+        
+        if (groupColIdx === -1 && sampleRow.length > 1) {
+            const lastVal = sampleRow[sampleRow.length - 1].toUpperCase();
+            if (lastVal === 'A' || lastVal === 'B') {
+                groupColIdx = sampleRow.length - 1;
+            }
+        }
+
+        const numericColIndices = [];
+        for (let c = 0; c < sampleRow.length; c++) {
+            if (c === groupColIdx) continue;
+            numericColIndices.push(c);
+        }
+
+        const neededColumns = Math.max(1, numericColIndices.length);
+        while (numColumns < neededColumns) {
+            addColumn();
+        }
+
+        if (isFirstRowHeader) {
+            let colCounter = 1;
+            numericColIndices.forEach((origIdx) => {
+                if (headers[origIdx] && colCounter <= numColumns) {
+                    const nameInput = document.getElementById(`col-name-${colCounter}`);
+                    if (nameInput) {
+                        nameInput.value = headers[origIdx];
+                    }
+                }
+                colCounter++;
+            });
+            updateColumnNames();
+        }
+
+        if (groupColIdx !== -1 && !groupVisible) {
+            toggleGroupCol();
+        }
+
+        dataRows.forEach((cells, rIdx) => {
+            const tbodyTrs = document.querySelectorAll('#data-tbody tr');
+            if (rIdx >= tbodyTrs.length) {
+                addRow();
+            }
+            const targetTr = document.querySelectorAll('#data-tbody tr')[rIdx];
+
+            let colCounter = 1;
+            numericColIndices.forEach((origIdx) => {
+                if (colCounter <= numColumns) {
+                    const input = targetTr.querySelector(`.val-col${colCounter}`);
+                    if (input && cells[origIdx] !== undefined) {
+                        input.value = cells[origIdx];
+                    }
+                }
+                colCounter++;
+            });
+
+            if (groupColIdx !== -1) {
+                const groupInput = targetTr.querySelector('.val-group');
+                const gVal = cells[groupColIdx];
+                if (groupInput && gVal !== undefined) {
+                    const upperG = gVal.toUpperCase();
+                    groupInput.value = (upperG === 'B') ? 'B' : 'A';
+                }
+            }
+        });
+
+        document.getElementById('excel-paste-box').value = '';
+    }
+
+    function collectDataForColumn(colIdx) {
+        const rows = document.querySelectorAll('#data-tbody tr');
+        let data = [];
+        rows.forEach((tr, index) => {
+            const valInp = tr.querySelector(`.val-col${colIdx}`);
+            const groupInp = tr.querySelector('.val-group');
+            if (valInp && valInp.value.trim() !== '') {
+                const num = parseFloat(valInp.value);
+                if (!isNaN(num)) {
+                    let group = groupInp ? (groupInp.value.trim().toUpperCase() || 'A') : 'A';
+                    if (group !== 'A' && group !== 'B') group = 'A';
+                    data.push({ rowNum: index + 1, val: num, group: group });
+                }
+            }
+        });
+        return data;
+    }
+
+    function changeScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(`screen-${screenId}`).classList.add('active');
+        if (screenId === 'chart' || screenId === 'drag') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    function openSelectScreen(colIdx) {
+        currentVarIdx = colIdx;
+        const nameInput = document.getElementById(`col-name-${colIdx}`);
+        const name = nameInput ? (nameInput.value || `データ${colIdx}`) : `データ${colIdx}`;
+        document.getElementById('select-title').innerText = `📊 「${name}」の分析`;
+
+        const wrap = document.getElementById('graph-select-buttons-wrap');
+        wrap.innerHTML = `
+            <button onclick="goToChart('dot')" class="btn-success" style="font-size: 28px; padding: 35px 50px;">🔴 ドットプロット</button>
+            <button onclick="goToChart('bar')" class="btn-warning" style="font-size: 28px; padding: 35px 50px;">📊 柱状グラフ（ヒストグラム）</button>
+        `;
+        changeScreen('select');
+    }
+
+    function goToChart(type) {
+        currentChartType = type;
+        activeStat = null;
+        statGroupFilter = 'ALL';
+        document.getElementById('stat-result-text').innerText = '';
+        
+        const nameInput = document.getElementById(`col-name-${currentVarIdx}`);
+        const name = nameInput ? (nameInput.value || `データ${currentVarIdx}`) : `データ${currentVarIdx}`;
+        document.getElementById('main-chart-title').innerText = `${name} の ${type === 'dot' ? 'ドットプロット' : '柱状グラフ'}`;
+
+        const histControls = document.getElementById('histogram-controls');
+        const dragBtn = document.getElementById('btn-drag-mode-toggle');
+        if (type === 'bar') {
+            histControls.style.display = 'flex';
+            if (dragBtn) dragBtn.style.display = 'none';
+        } else {
+            histControls.style.display = 'none';
+            if (dragBtn) dragBtn.style.display = 'inline-block';
+        }
+
+        const groupFilterContainer = document.getElementById('group-filter-container');
+        if (groupVisible) {
+            groupFilterContainer.style.display = 'flex';
+            updateGroupFilterButtonsStyle();
+        } else {
+            groupFilterContainer.style.display = 'none';
+        }
+
+        changeScreen('chart');
+        renderMainChart();
+    }
+
+    function setStatGroup(filterType) {
+        statGroupFilter = filterType;
+        activeStat = null;
+        document.getElementById('stat-result-text').innerText = '';
+        updateGroupFilterButtonsStyle();
+        renderMainChart();
+    }
+
+    function updateGroupFilterButtonsStyle() {
+        const btnAll = document.getElementById('btn-group-all');
+        const btnA = document.getElementById('btn-group-a');
+        const btnB = document.getElementById('btn-group-b');
+        const btnCompare = document.getElementById('btn-group-compare');
+
+        [btnAll, btnA, btnB, btnCompare].forEach(b => {
+            if (b) {
+                b.style.opacity = '0.6';
+                b.style.transform = 'scale(0.95)';
+            }
+        });
+
+        if (statGroupFilter === 'ALL' && btnAll) { btnAll.style.opacity = '1'; btnAll.style.transform = 'scale(1)'; }
+        if (statGroupFilter === 'A' && btnA) { btnA.style.opacity = '1'; btnA.style.transform = 'scale(1)'; }
+        if (statGroupFilter === 'B' && btnB) { btnB.style.opacity = '1'; btnB.style.transform = 'scale(1)'; }
+        if (statGroupFilter === 'COMPARE' && btnCompare) { btnCompare.style.opacity = '1'; btnCompare.style.transform = 'scale(1)'; }
+    }
+
+    function renderMainChart() {
+        rawData = collectDataForColumn(currentVarIdx);
+        
+        const secondaryWrap = document.getElementById('secondary-chart-container-wrap');
+        const primaryTitleLabel = document.getElementById('primary-chart-title-label');
+        const xAxisPrimary = document.getElementById('chart-x-axis-primary');
+        const xAxisSecondary = document.getElementById('chart-x-axis-secondary');
+        const xAxisSingle = document.getElementById('chart-x-axis');
+        
+        if (groupVisible && statGroupFilter === 'COMPARE') {
+            secondaryWrap.style.display = 'block';
+            primaryTitleLabel.style.display = 'block';
+            primaryTitleLabel.innerText = 'グループA';
+            xAxisPrimary.style.display = 'flex';
+            xAxisSecondary.style.display = 'flex';
+            xAxisSingle.style.display = 'none';
+        } else if (groupVisible && statGroupFilter === 'A') {
+            secondaryWrap.style.display = 'none';
+            primaryTitleLabel.style.display = 'block';
+            primaryTitleLabel.innerText = 'グループA';
+            xAxisPrimary.style.display = 'flex';
+            xAxisSecondary.style.display = 'none';
+            xAxisSingle.style.display = 'none';
+        } else if (groupVisible && statGroupFilter === 'B') {
+            secondaryWrap.style.display = 'none';
+            primaryTitleLabel.style.display = 'block';
+            primaryTitleLabel.innerText = 'グループB';
+            xAxisPrimary.style.display = 'flex';
+            xAxisSecondary.style.display = 'none';
+            xAxisSingle.style.display = 'none';
+        } else {
+            secondaryWrap.style.display = 'none';
+            primaryTitleLabel.style.display = 'none';
+            xAxisPrimary.style.display = 'none';
+            xAxisSecondary.style.display = 'none';
+            xAxisSingle.style.display = 'flex';
+        }
+
+        const globalMinMax = getGlobalMinMax(rawData);
+
+        if (currentChartType === 'dot') {
+            if (groupVisible && statGroupFilter === 'COMPARE') {
+                renderDotChart('main-chart-area', 'chart-x-axis-primary', rawData.filter(d => d.group === 'A'), globalMinMax);
+                renderDotChart('sub-chart-area', 'chart-x-axis-secondary', rawData.filter(d => d.group === 'B'), globalMinMax);
+            } else if (groupVisible && statGroupFilter === 'A') {
+                renderDotChart('main-chart-area', 'chart-x-axis-primary', rawData.filter(d => d.group === 'A'), globalMinMax);
+            } else if (groupVisible && statGroupFilter === 'B') {
+                renderDotChart('main-chart-area', 'chart-x-axis-primary', rawData.filter(d => d.group === 'B'), globalMinMax);
+            } else {
+                renderDotChart('main-chart-area', 'chart-x-axis', rawData, globalMinMax);
+            }
+        } else {
+            if (groupVisible && statGroupFilter === 'COMPARE') {
+                renderBarChart('main-chart-area', 'chart-x-axis-primary', rawData.filter(d => d.group === 'A'), globalMinMax);
+                renderBarChart('sub-chart-area', 'chart-x-axis-secondary', rawData.filter(d => d.group === 'B'), globalMinMax);
+            } else if (groupVisible && statGroupFilter === 'A') {
+                renderBarChart('main-chart-area', 'chart-x-axis-primary', rawData.filter(d => d.group === 'A'), globalMinMax);
+            } else if (groupVisible && statGroupFilter === 'B') {
+                renderBarChart('main-chart-area', 'chart-x-axis-primary', rawData.filter(d => d.group === 'B'), globalMinMax);
+            } else {
+                renderBarChart('main-chart-area', 'chart-x-axis', rawData, globalMinMax);
+            }
+        }
+        updateStatLinePosition();
+    }
+
+    function getGlobalMinMax(dataset) {
+        if (dataset.length === 0) return { minX: 0, maxX: 10 };
+        const vals = dataset.map(d => d.val);
+        const maxVal = Math.max(...vals);
+        let maxX = Math.max(10, Math.ceil((maxVal * 1.1) / 5) * 5);
+        if (maxVal >= maxX) {
+            maxX = maxVal + 5;
+        }
+        return { minX: 0, maxX: maxX };
+    }
+
+    function renderDotChart(areaId, xAxisId, dataset, fixedMinMax) {
+        const area = document.getElementById(areaId);
+        const oldStatLine = area.querySelector('.stat-line');
+        const oldStatLabel = area.querySelector('.stat-line-label');
+        
+        area.innerHTML = '';
+        if (oldStatLine) area.appendChild(oldStatLine);
+        if (oldStatLabel) area.appendChild(oldStatLabel);
+
+        const { minX, maxX } = fixedMinMax;
+        const areaWidth = Math.max(area.clientWidth || 900, 900);
+        area.style.minWidth = `${areaWidth}px`;
+        const areaHeight = area.clientHeight || 380;
+        
+        const paddingX = 40;
+        const availableWidth = areaWidth - (paddingX * 2);
+        const stepX = availableWidth / maxX;
+
+        const stackCounts = {};
+        dataset.forEach(d => {
+            const val = d.val;
+            stackCounts[val] = (stackCounts[val] || 0) + 1;
+            const currentStack = stackCounts[val] - 1;
+
+            const x = paddingX + (val * stepX);
+            const y = areaHeight - 20 - (currentStack * 36);
+
+            const dot = document.createElement('div');
+            dot.className = `dot ${groupVisible ? 'group-' + d.group : ''}`;
+            dot.style.left = `${x}px`;
+            dot.style.top = `${y}px`;
+            dot.innerText = d.rowNum;
+            area.appendChild(dot);
+        });
+
+        if (xAxisId) {
+            const xAxis = document.getElementById(xAxisId);
+            xAxis.style.minWidth = `${areaWidth}px`;
+            let xHtml = '';
+            for (let v = minX; v <= maxX; v++) {
+                const xPos = paddingX + (v * stepX);
+                xHtml += `<span style="position: absolute; left: ${xPos}px; transform: translateX(-50%);">${v}</span>`;
+            }
+            xAxis.style.position = 'relative';
+            xAxis.style.height = '30px';
+            xAxis.innerHTML = xHtml;
+        }
+    }
+
+    function renderBarChart(areaId, xAxisId, dataset, fixedMinMax) {
+        const area = document.getElementById(areaId);
+        area.innerHTML = '';
+
+        if (dataset.length === 0) {
+            area.innerHTML += `<div style="position:absolute; width:100%; top:40%; text-align:center; font-weight:900; color:#b2bec3; font-size:22px;">データがありません</div>`;
+            if (xAxisId) document.getElementById(xAxisId).innerHTML = '';
+            return;
+        }
+
+        const binWidth = parseInt(document.getElementById('bin-width-select').value) || 2;
+        const { minX, maxX } = fixedMinMax;
+
+        const bins = [];
+        for (let bStart = minX; bStart < maxX; bStart += binWidth) {
+            const bEnd = bStart + binWidth;
+            const count = dataset.filter(d => d.val >= bStart && d.val < bEnd).length;
+            bins.push({ start: bStart, end: bEnd, count: count });
+        }
+
+        const maxCount = Math.max(...bins.map(b => b.count), 1);
+        const areaHeight = area.clientHeight || 380;
+        const areaWidth = Math.max(area.clientWidth || 900, 900);
+        area.style.minWidth = `${areaWidth}px`;
+        const barWidth = Math.max(25, (areaWidth - 80) / bins.length - 8);
+
+        bins.forEach((bin, idx) => {
+            const x = 40 + idx * (barWidth + 8);
+            const barHeight = (bin.count / maxCount) * (areaHeight - 60);
+            const y = areaHeight - barHeight;
+
+            const bar = document.createElement('div');
+            bar.style.position = 'absolute';
+            bar.style.left = `${x}px`;
+            bar.style.top = `${y}px`;
+            bar.style.width = `${barWidth}px`;
+            bar.style.height = `${barHeight}px`;
+            bar.style.backgroundColor = '#4ECDC4';
+            bar.style.borderRadius = '12px 12px 0 0';
+            bar.style.border = '3px solid #2F3640';
+            bar.style.display = 'flex';
+            bar.style.alignItems = 'flex-start';
+            bar.style.justifyContent = 'center';
+            bar.style.paddingTop = '6px';
+            bar.style.color = '#2F3640';
+            bar.style.fontWeight = '900';
+            bar.style.fontSize = '15px';
+            bar.innerText = bin.count > 0 ? bin.count : '';
+            area.appendChild(bar);
+        });
+
+        if (xAxisId) {
+            const xAxis = document.getElementById(xAxisId);
+            xAxis.style.minWidth = `${areaWidth}px`;
+            let xHtml = '';
+            bins.forEach((bin, idx) => {
+                xHtml += `<span style="position:absolute; left:${40 + idx * (barWidth + 8) + barWidth/2 - 15}px;">${bin.start}〜</span>`;
+            });
+            xAxis.style.position = 'relative';
+            xAxis.style.height = '30px';
+            xAxis.innerHTML = xHtml;
+        }
+    }
+
+    function openDragScreen() {
+        changeScreen('drag');
+        renderDragCanvas();
+    }
+
+    function renderDragCanvas() {
+        const area = document.getElementById('drag-area');
+        area.innerHTML = '';
+        const dataset = collectDataForColumn(currentVarIdx);
+
+        if (dataset.length === 0) {
+            area.innerHTML = `<div style="position:absolute; width:100%; top:40%; text-align:center; font-weight:900; color:#b2bec3; font-size:22px;">データが入力されていません</div>`;
+            return;
+        }
+
+        const globalMinMax = getGlobalMinMax(dataset);
+        const { minX, maxX } = globalMinMax;
+        const areaWidth = Math.max(area.clientWidth || 900, 900);
+        area.style.minWidth = `${areaWidth}px`;
+        const areaHeight = area.clientHeight || 380;
+
+        const paddingX = 40;
+        const availableWidth = areaWidth - (paddingX * 2);
+        const stepX = availableWidth / maxX;
+
+        const stackCounts = {};
+        dataset.forEach((d, idx) => {
+            const val = d.val;
+            stackCounts[val] = (stackCounts[val] || 0) + 1;
+            const currentStack = stackCounts[val] - 1;
+
+            const x = paddingX + (val * stepX);
+            const y = areaHeight - 20 - (currentStack * 36);
+
+            const dot = document.createElement('div');
+            dot.className = `dot ${groupVisible ? 'group-' + d.group : ''}`;
+            dot.style.left = `${x}px`;
+            dot.style.top = `${y}px`;
+            dot.innerText = d.rowNum;
+            dot.setAttribute('data-id', idx);
+
+            dot.addEventListener('mousedown', startDrag);
+            dot.addEventListener('touchstart', startDrag, {passive: false});
+
+            area.appendChild(dot);
+        });
+
+        const xAxis = document.getElementById('drag-x-axis');
+        xAxis.style.minWidth = `${areaWidth}px`;
+        let xHtml = '';
+        for (let v = minX; v <= maxX; v++) {
+            const xPos = paddingX + (v * stepX);
+            xHtml += `<span style="position: absolute; left: ${xPos}px; transform: translateX(-50%);">${v}</span>`;
+        }
+        xAxis.style.position = 'relative';
+        xAxis.style.height = '30px';
+        xAxis.innerHTML = xHtml;
+        renderHorizontalGrids();
+    }
+
+    function renderHorizontalGrids() {
+        const area = document.getElementById('drag-area');
+        area.querySelectorAll('.grid-line').forEach(el => el.remove());
+
+        const divOption = parseInt(document.getElementById('grid-div-select').value) || 0;
+        if (divOption === 0) return;
+
+        const areaHeight = area.clientHeight || 380;
+        const usableHeight = areaHeight - 40;
+        const stepY = usableHeight / divOption;
+
+        for (let i = 1; i < divOption; i++) {
+            const yPos = areaHeight - 20 - (stepY * i);
+            const line = document.createElement('div');
+            line.className = 'grid-line';
+            line.style.position = 'absolute';
+            line.style.left = '0';
+            line.style.width = '100%';
+            line.style.top = `${yPos}px`;
+            line.style.borderTop = '2px dashed #ff9f43';
+            line.style.zIndex = '1';
+            area.appendChild(line);
+        }
+    }
+
+    function startDrag(e) {
+        e.preventDefault();
+        draggedElement = e.target;
+        const rect = draggedElement.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        
+        dragOffsetX = clientX - rect.left - (rect.width / 2);
+        dragOffsetY = clientY - rect.top - (rect.height / 2);
+
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('mouseup', stopDrag);
+        document.addEventListener('touchmove', onDrag, {passive: false});
+        document.addEventListener('touchend', stopDrag);
+    }
+
+    function onDrag(e) {
+        if (!draggedElement) return;
+        e.preventDefault();
+        const area = document.getElementById('drag-area');
+        const areaRect = area.getBoundingClientRect();
+        
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        let newX = clientX - areaRect.left - dragOffsetX;
+        let newY = clientY - areaRect.top - dragOffsetY;
+
+        newX = Math.max(20, Math.min(newX, areaRect.width - 20));
+        newY = Math.max(20, Math.min(newY, areaRect.height - 20));
+
+        draggedElement.style.left = `${newX}px`;
+        draggedElement.style.top = `${newY}px`;
+    }
+
+    function stopDrag() {
+        draggedElement = null;
+        document.removeEventListener('mousemove', onDrag);
+        document.removeEventListener('mouseup', stopDrag);
+        document.removeEventListener('touchmove', onDrag);
+        document.removeEventListener('touchend', stopDrag);
+    }
+
+    function toggleStat(statType) {
+        if (activeStat === statType) {
+            activeStat = null;
+            document.getElementById('stat-result-text').innerText = '';
+        } else {
+            activeStat = statType;
+            calcAndShowStat(statType);
+        }
+        updateStatLinePosition();
+    }
+
+    function calcAndShowStat(statType) {
+        const dataset = getDatasetForStatCalc();
+        if (dataset.length === 0) return;
+
+        const vals = dataset.map(d => d.val).sort((a, b) => a - b);
+        let resultName = '';
+        let resultVal = 0;
+
+        if (statType === 'mean') {
+            resultName = '平均値';
+            const sum = vals.reduce((a, b) => a + b, 0);
+            resultVal = (sum / vals.length).toFixed(1);
+        } else if (statType === 'median') {
+            resultName = '中央値';
+            const mid = Math.floor(vals.length / 2);
+            if (vals.length % 2 === 0) {
+                resultVal = ((vals[mid - 1] + vals[mid]) / 2).toFixed(1);
+            } else {
+                resultVal = vals[mid];
+            }
+        } else if (statType === 'mode') {
+            resultName = '最頻値';
+            const counts = {};
+            vals.forEach(v => counts[v] = (counts[v] || 0) + 1);
+            let maxC = 0;
+            let modes = [];
+            for (let v in counts) {
+                if (counts[v] > maxC) {
+                    maxC = counts[v];
+                    modes = [v];
+                } else if (counts[v] === maxC) {
+                    modes.push(v);
+                }
+            }
+            resultVal = modes.join(', ');
+        }
+
+        const nameInput = document.getElementById(`col-name-${currentVarIdx}`);
+        const name = nameInput ? (nameInput.value || `データ${currentVarIdx}`) : `データ${currentVarIdx}`;
+        let groupLabel = '';
+        if (groupVisible) {
+            if (statGroupFilter === 'A') groupLabel = '（グループA）';
+            else if (statGroupFilter === 'B') groupLabel = '（グループB）';
+            else if (statGroupFilter === 'COMPARE') groupLabel = '（グループA）';
+        }
+        document.getElementById('stat-result-text').innerText = `${name}${groupLabel} の ${resultName} は 【 ${resultVal} 】 です！`;
+    }
+
+    function getDatasetForStatCalc() {
+        if (!groupVisible || statGroupFilter === 'ALL') return rawData;
+        if (statGroupFilter === 'A' || statGroupFilter === 'COMPARE') return rawData.filter(d => d.group === 'A');
+        if (statGroupFilter === 'B') return rawData.filter(d => d.group === 'B');
+        return rawData;
+    }
+
+    function updateStatLinePosition() {
+        const line = document.getElementById('stat-line');
+        const lineLabel = document.getElementById('stat-line-label');
+        if (!activeStat) {
+            line.style.display = 'none';
+            lineLabel.style.display = 'none';
+            return;
+        }
+
+        const dataset = getDatasetForStatCalc();
+        if (dataset.length === 0) return;
+
+        const vals = dataset.map(d => d.val).sort((a, b) => a - b);
+        let targetVal = 0;
+        if (activeStat === 'mean') {
+            const sum = vals.reduce((a, b) => a + b, 0);
+            targetVal = sum / vals.length;
+        } else if (activeStat === 'median') {
+            const mid = Math.floor(vals.length / 2);
+            targetVal = (vals.length % 2 === 0) ? (vals[mid - 1] + vals[mid]) / 2 : vals[mid];
+        } else if (activeStat === 'mode') {
+            const counts = {};
+            vals.forEach(v => counts[v] = (counts[v] || 0) + 1);
+            let maxC = 0;
+            let modeVal = vals[0];
+            for (let v in counts) {
+                if (counts[v] > maxC) {
+                    maxC = counts[v];
+                    modeVal = parseFloat(v);
+                }
+            }
+            targetVal = modeVal;
+        }
+
+        const globalMinMax = getGlobalMinMax(rawData);
+        const { minX, maxX } = globalMinMax;
+        const area = document.getElementById('main-chart-area');
+        const areaWidth = Math.max(area.clientWidth || 900, 900);
+        const paddingX = 40;
+        const availableWidth = areaWidth - (paddingX * 2);
+        const stepX = availableWidth / maxX;
+        const posX = paddingX + (targetVal * stepX);
+
+        line.style.display = 'block';
+        line.style.left = `${posX}px`;
+
+        lineLabel.style.display = 'block';
+        lineLabel.style.left = `${Math.min(Math.max(10, posX - 60), areaWidth - 140)}px`;
+        lineLabel.innerText = `${activeStat === 'mean' ? '平均値' : activeStat === 'median' ? '中央値' : '最頻値'}: ${targetVal.toFixed(1)}`;
+    }
+
+    function openFrequencyTable() {
+        const dataset = getDatasetForStatCalc();
+        if (dataset.length === 0) return;
+
+        const binWidth = parseInt(document.getElementById('bin-width-select').value) || 2;
+        const vals = dataset.map(d => d.val);
+        const minVal = Math.min(...vals);
+        const maxVal = Math.max(...vals);
+
+        const startBin = Math.floor(minVal / binWidth) * binWidth;
+        const endBin = Math.ceil((maxVal + 1) / binWidth) * binWidth;
+
+        const bins = [];
+        for (let bStart = startBin; bStart < endBin; bStart += binWidth) {
+            const bEnd = bStart + binWidth;
+            const count = dataset.filter(d => d.val >= bStart && d.val < bEnd).length;
+            bins.push({ start: bStart, end: bEnd, count: count });
+        }
+
+        let html = `<table><thead><tr><th>階級</th><th>度数 (個)</th></tr></thead><tbody>`;
+        bins.forEach(b => {
+            html += `<tr><td>${b.start} 〜 ${b.end} 未満</td><td style="font-weight:900; color:#FF4757; font-size:18px;">${b.count}</td></tr>`;
+        });
+        html += `</tbody></table>`;
+
+        document.getElementById('freq-table-content').innerHTML = html;
+        document.getElementById('freq-modal').style.display = 'flex';
+    }
+
+    function closeFrequencyTable() {
+        document.getElementById('freq-modal').style.display = 'none';
+    }
+
+    function downloadChartImage() {
+        const exportTarget = document.getElementById('chart-export-target');
+        const nameElem = document.getElementById(`col-name-${currentVarIdx}`);
+        const name = nameElem ? (nameElem.value || `データ${currentVarIdx}`) : `データ${currentVarIdx}`;
+        const typeName = currentChartType === 'dot' ? 'ドットプロット' : '柱状グラフ';
+
+        const originalBg = exportTarget.style.background;
+        exportTarget.style.background = '#FFFFFF';
+
+        html2canvas(exportTarget, { scale: 2, scrollX: 0, scrollY: 0 }).then(canvas => {
+            exportTarget.style.background = originalBg;
+            const link = document.createElement('a');
+            link.download = `${name}_${typeName}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }).catch(err => {
+            console.error('画像保存に失敗しました:', err);
+        });
+    }
+
+    function downloadDragChartImage() {
+        const exportTarget = document.getElementById('drag-export-target');
+        const nameElem = document.getElementById(`col-name-${currentVarIdx}`);
+        const name = nameElem ? (nameElem.value || `データ${currentVarIdx}`) : `データ${currentVarIdx}`;
+
+        const originalBg = exportTarget.style.background;
+        exportTarget.style.background = '#FFFFFF';
+
+        html2canvas(exportTarget, { scale: 2, scrollX: 0, scrollY: 0 }).then(canvas => {
+            exportTarget.style.background = originalBg;
+            const link = document.createElement('a');
+            link.download = `${name}_自由に動かすモード.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }).catch(err => {
+            console.error('画像保存に失敗しました:', err);
+        });
+    }
+</script>
+</body>
+</html>
