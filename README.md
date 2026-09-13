@@ -1,1 +1,0 @@
-# hige-mig-spec.github.io
